@@ -129,9 +129,6 @@ export const CreateSurfaceWithColormap = async (vertexData: Float32Array, normal
             format: "depth24plus",
             depthWriteEnabled: true,
             depthCompare: "less"
-        },
-        multisample:{
-            count: 1,
         }
     });
 
@@ -173,9 +170,6 @@ export const CreateSurfaceWithColormap = async (vertexData: Float32Array, normal
             format: "depth24plus",
             depthWriteEnabled: true,
             depthCompare: "less"
-        }, 
-        multisample:{
-            count:1,
         }
     });
 
