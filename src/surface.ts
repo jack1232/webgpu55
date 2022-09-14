@@ -129,6 +129,9 @@ export const CreateSurfaceWithColormap = async (vertexData: Float32Array, normal
             format: "depth24plus",
             depthWriteEnabled: true,
             depthCompare: "less"
+        },
+        multisample:{
+            count: 4,
         }
     });
 
@@ -170,6 +173,9 @@ export const CreateSurfaceWithColormap = async (vertexData: Float32Array, normal
             format: "depth24plus",
             depthWriteEnabled: true,
             depthCompare: "less"
+        },
+        multisample:{
+            count: 4,
         }
     });
 
@@ -265,16 +271,25 @@ export const CreateSurfaceWithColormap = async (vertexData: Float32Array, normal
         ]
     });
 
-    let textureView = gpu.context.getCurrentTexture().createView();
+    let contextTexture = gpu.context.getCurrentTexture();
+    let texture = device.createTexture({
+        size: [gpu.canvas.width, gpu.canvas.height, 1],
+        sampleCount: 4,
+        format: gpu.format as GPUTextureFormat,
+        usage: GPUTextureUsage.RENDER_ATTACHMENT,
+    });
+
     const depthTexture = device.createTexture({
         size: [gpu.canvas.width, gpu.canvas.height, 1],
+        sampleCount: 4,
         format: "depth24plus",
         usage: GPUTextureUsage.RENDER_ATTACHMENT
     });
 
     const renderPassDescription = {
         colorAttachments: [{
-            view: textureView,
+            view: texture.createView(),
+            resolveTarget: contextTexture.createView(),
             clearValue: { r: 0.2, g: 0.247, b: 0.314, a: 1.0 }, //background color
             loadOp: 'clear',
             storeOp: 'store'
@@ -308,8 +323,19 @@ export const CreateSurfaceWithColormap = async (vertexData: Float32Array, normal
         device.queue.writeBuffer(vertexUniformBuffer, 64, modelMatrix as ArrayBuffer);
         device.queue.writeBuffer(vertexUniformBuffer, 128, normalMatrix as ArrayBuffer);
 
-        textureView = gpu.context.getCurrentTexture().createView();
-        renderPassDescription.colorAttachments[0].view = textureView;
+        contextTexture.destroy();
+        texture.destroy();
+        
+        contextTexture = gpu.context.getCurrentTexture();      
+        texture = device.createTexture({
+            size: [gpu.canvas.width, gpu.canvas.height, 1],
+            sampleCount: 4,
+            format: gpu.format as GPUTextureFormat,
+            usage: GPUTextureUsage.RENDER_ATTACHMENT,
+        });
+        renderPassDescription.colorAttachments[0].resolveTarget = contextTexture.createView();
+        renderPassDescription.colorAttachments[0].view = texture.createView() as GPUTextureView;
+
         const commandEncoder = device.createCommandEncoder();
         const renderPass = commandEncoder.beginRenderPass(renderPassDescription as GPURenderPassDescriptor);
 
